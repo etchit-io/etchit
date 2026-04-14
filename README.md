@@ -1,2 +1,2 @@
 # etchit
-etch it / fetch it  decentralized pastebin
+etch it / fetch it a decentralized pastebin
