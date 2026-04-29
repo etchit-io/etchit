@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- etchit palette — ink / copper / bone -->
+    <color name="bg_primary">#0a0a0a</color>
+    <color name="bg_surface">#141414</color>
+    <color name="bg_card">#1c1c1c</color>
+
+    <color name="accent_blue">#c9732b</color>     <!-- copper (primary) -->
+    <color name="accent_green">#9ece6a</color>    <!-- status only -->
+    <color name="accent_orange">#e58a3f</color>   <!-- connecting state -->
+    <color name="accent_red">#f7768e</color>      <!-- error/offline -->
+
+    <color name="text_primary">#f5f2eb</color>    <!-- bone -->
+    <color name="text_secondary">#c0bdb2</color>
+    <color name="text_muted">#8a8a8a</color>      <!-- ash -->
+    <color name="border">#222222</color>
+
+    <color name="gradient_start">#c9732b</color>
+    <color name="gradient_end">#e58a3f</color>
+
+    <color name="ic_launcher_background">#0a0a0a</color>
+
+    <color name="status_connected">#9ece6a</color>
+    <color name="status_connecting">#e58a3f</color>
+    <color name="status_offline">#f7768e</color>
+
+    <!-- Brand accents for direct reference -->
+    <color name="brand_copper">#c9732b</color>
+    <color name="brand_copper_bright">#e58a3f</color>
+    <color name="brand_copper_dim">#8a4e1d</color>
+    <color name="brand_bone">#f5f2eb</color>
+    <color name="brand_ash">#8a8a8a</color>
+    <color name="brand_ink">#0a0a0a</color>
+</resources>

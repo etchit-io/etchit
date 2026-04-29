@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Applies on Android 12+ (API 31). Controls both Google cloud backup
+  and device-to-device transfer.
+
+  Excluded files:
+  - ant_paste_secure.xml: EncryptedSharedPreferences containing private
+    etch data maps. Values are encrypted with a hardware-Keystore key
+    that is device-bound and never backed up, so the blobs would be
+    undecryptable on restore anyway. Excluding it also avoids leaking
+    backup metadata (count/timestamps of private etches).
+  - WalletConnectV2.db: Reown/WalletConnect session pairings. This
+    matches the exclusion Reown ships in its own libraries; we keep
+    it here because tools:replace in the manifest otherwise clobbers
+    theirs. Session secrets are device-bound and should not travel.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="ant_paste_secure.xml" />
+        <exclude domain="database" path="WalletConnectV2.db" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="ant_paste_secure.xml" />
+        <exclude domain="database" path="WalletConnectV2.db" />
+    </device-transfer>
+</data-extraction-rules>

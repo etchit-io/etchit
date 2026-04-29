@@ -1,0 +1,33 @@
+[package]
+name = "ant-ffi"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# Pinned to the exact ant-client revision the shipping libant_ffi.so was
+# built against. Bump deliberately (see docs/FFI_BUILD.md) when upgrading.
+ant-core = { git = "https://github.com/WithAutonomi/ant-client", rev = "8d43c3b" }
+ant-node = "=0.11.0"
+evmlib = "=0.8.0"
+# Direct deps so we can resolve hierarchical DataMaps in data_get_public
+# (ant-core's data_download() doesn't, only ant-core's file_download() does).
+self_encryption = "=0.35.0"
+xor_name = "=5.0.0"
+bytes = "1"
+hex = "0.4"
+log = "0.4"
+rand = "0.8"
+rmp-serde = "1"
+thiserror = "2"
+zeroize = "1"
+tokio = { version = "1", features = ["rt-multi-thread"] }
+uniffi = { workspace = true, features = ["tokio"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.14"
+
+[build-dependencies]
+uniffi = { version = "0.29.4", features = ["build"] }

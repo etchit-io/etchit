@@ -1,0 +1,23 @@
+*.iml
+.gradle/
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+*.keystore
+*.jks
+CLAUDE.md
+# Internal planning / debug docs
+FIX_PLAN.md
+docs/FFI_BUG1.md
+docs/FFI_REBUILD_PLAN.md
+docs/relay-upgrade-plan.md
+/app/build/
+*.hprof
+/autonomi/
+Autonomi Files/
+original wallet imp/
+.kotlin/

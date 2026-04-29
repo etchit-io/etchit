@@ -1,0 +1,382 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.reown",
+    "module": "android-core",
+    "version": "1.6.12",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.reown",
+          "module": "foundation",
+          "version": {
+            "requires": "1.6.12"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-android",
+          "version": {
+            "requires": "1.10.2"
+          }
+        },
+        {
+          "group": "net.zetetic",
+          "module": "sqlcipher-android",
+          "version": {
+            "requires": "4.6.1"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "sqlcipher-android",
+              "type": "aar",
+              "extension": "aar"
+            }
+          }
+        },
+        {
+          "group": "androidx.security",
+          "module": "security-crypto-ktx",
+          "version": {
+            "requires": "1.1.0-alpha06"
+          }
+        },
+        {
+          "group": "io.insert-koin",
+          "module": "koin-android",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "com.jakewharton.timber",
+          "module": "timber",
+          "version": {
+            "requires": "5.0.1"
+          }
+        },
+        {
+          "group": "org.web3j",
+          "module": "crypto",
+          "version": {
+            "requires": "4.9.8-hotfix"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "bip39",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "bip39_wordlist_en",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "bip32",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "model",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "crypto_impl_spongycastle",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.squareup.retrofit2",
+          "module": "retrofit",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "com.squareup.retrofit2",
+          "module": "converter-moshi",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "io.github.pandulapeter.beagle",
+          "module": "log-okhttp",
+          "version": {
+            "requires": "2.9.0"
+          }
+        },
+        {
+          "group": "app.cash.sqldelight",
+          "module": "runtime",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "android-core-1.6.12.aar",
+          "url": "android-core-1.6.12.aar",
+          "size": 1339351,
+          "sha512": "2238c87248188a70b3695a3efe03df619d78a9cc3dd4ded1c0a33cda3a057375714bdfdac8bccdfe14eaf08e56a35d397bacaa217ccf6f27f3fd753251159e7d",
+          "sha256": "f2e3dcee41de8a62ed6c8f0fc7c871c486a0d034ee02f729333d1fbb4c507a3e",
+          "sha1": "b4e33da5ffe25f1386f83a6e032106a09183f16f",
+          "md5": "a0cbcd63d14864d58984c97b7246c3b0"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.reown",
+          "module": "foundation",
+          "version": {
+            "requires": "1.6.12"
+          }
+        },
+        {
+          "group": "com.walletconnect.Scarlet",
+          "module": "lifecycle-android",
+          "version": {
+            "requires": "1.0.2"
+          }
+        },
+        {
+          "group": "app.cash.sqldelight",
+          "module": "android-driver",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "app.cash.sqldelight",
+          "module": "coroutines-extensions",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "app.cash.sqldelight",
+          "module": "primitive-adapters",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "app.cash.sqldelight",
+          "module": "async-extensions",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "com.getkeepsafe.relinker",
+          "module": "relinker",
+          "version": {
+            "requires": "1.4.5"
+          }
+        },
+        {
+          "group": "com.google.firebase",
+          "module": "firebase-bom",
+          "version": {
+            "requires": "33.3.0"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          }
+        },
+        {
+          "group": "com.google.firebase",
+          "module": "firebase-messaging"
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-android",
+          "version": {
+            "requires": "1.10.2"
+          }
+        },
+        {
+          "group": "net.zetetic",
+          "module": "sqlcipher-android",
+          "version": {
+            "requires": "4.6.1"
+          },
+          "excludes": [
+            {
+              "group": "*",
+              "module": "*"
+            }
+          ],
+          "thirdPartyCompatibility": {
+            "artifactSelector": {
+              "name": "sqlcipher-android",
+              "type": "aar",
+              "extension": "aar"
+            }
+          }
+        },
+        {
+          "group": "androidx.security",
+          "module": "security-crypto-ktx",
+          "version": {
+            "requires": "1.1.0-alpha06"
+          }
+        },
+        {
+          "group": "io.insert-koin",
+          "module": "koin-android",
+          "version": {
+            "requires": "4.1.0"
+          }
+        },
+        {
+          "group": "com.jakewharton.timber",
+          "module": "timber",
+          "version": {
+            "requires": "5.0.1"
+          }
+        },
+        {
+          "group": "org.web3j",
+          "module": "crypto",
+          "version": {
+            "requires": "4.9.8-hotfix"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "bip39",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "bip39_wordlist_en",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "bip32",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "model",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.github.komputing.kethereum",
+          "module": "crypto_impl_spongycastle",
+          "version": {
+            "requires": "0.86.0"
+          }
+        },
+        {
+          "group": "com.squareup.retrofit2",
+          "module": "retrofit",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "com.squareup.retrofit2",
+          "module": "converter-moshi",
+          "version": {
+            "requires": "2.11.0"
+          }
+        },
+        {
+          "group": "io.github.pandulapeter.beagle",
+          "module": "log-okhttp",
+          "version": {
+            "requires": "2.9.0"
+          }
+        },
+        {
+          "group": "app.cash.sqldelight",
+          "module": "runtime",
+          "version": {
+            "requires": "2.0.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "android-core-1.6.12.aar",
+          "url": "android-core-1.6.12.aar",
+          "size": 1339351,
+          "sha512": "2238c87248188a70b3695a3efe03df619d78a9cc3dd4ded1c0a33cda3a057375714bdfdac8bccdfe14eaf08e56a35d397bacaa217ccf6f27f3fd753251159e7d",
+          "sha256": "f2e3dcee41de8a62ed6c8f0fc7c871c486a0d034ee02f729333d1fbb4c507a3e",
+          "sha1": "b4e33da5ffe25f1386f83a6e032106a09183f16f",
+          "md5": "a0cbcd63d14864d58984c97b7246c3b0"
+        }
+      ]
+    }
+  ]
+}

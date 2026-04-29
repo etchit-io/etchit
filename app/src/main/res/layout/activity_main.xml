@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_primary"
+    android:fitsSystemWindows="true">
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        android:overScrollMode="always">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="32dp">
+
+            <!-- ── Header ────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- etch/it wordmark: slash in copper, the rest in bone. -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="etch"
+                        android:textSize="26sp"
+                        android:textColor="@color/brand_bone"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="-0.05" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="/"
+                        android:textSize="26sp"
+                        android:textColor="@color/brand_copper"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="-0.05" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="it"
+                        android:textSize="26sp"
+                        android:textColor="@color/brand_bone"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:letterSpacing="-0.05" />
+                </LinearLayout>
+
+                <!-- Status pill -->
+                <LinearLayout
+                    android:id="@+id/statusPill"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:background="@drawable/input_bg"
+                    android:layout_marginEnd="8dp">
+
+                    <View
+                        android:id="@+id/statusDot"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:background="@drawable/status_dot"
+                        android:layout_marginEnd="6dp" />
+
+                    <TextView
+                        android:id="@+id/statusIndicator"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="connecting"
+                        android:textColor="@color/text_muted"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace" />
+                </LinearLayout>
+
+                <!-- Settings button -->
+                <ImageButton
+                    android:id="@+id/settingsButton"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:src="@drawable/settings_icon"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Settings"
+                    android:padding="6dp" />
+            </LinearLayout>
+
+            <!-- ── Live progress / status line (replaces static tagline) ── -->
+            <TextView
+                android:id="@+id/statusMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="etch it. fetch it."
+                android:textColor="@color/text_muted"
+                android:textSize="13sp"
+                android:fontFamily="serif"
+                android:textStyle="italic"
+                android:layout_marginBottom="6dp" />
+
+            <!-- ── Wallet Status ────────────────────────── -->
+            <TextView
+                android:id="@+id/walletStatusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:visibility="gone" />
+
+            <!-- Peer count + wallet balance -->
+            <TextView
+                android:id="@+id/networkInfoText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_muted"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:visibility="gone"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- ── Create Section ────────────────────── -->
+            <LinearLayout
+                android:id="@+id/createSection"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
+
+                    <EditText
+                        android:id="@+id/titleInput"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/input_selector"
+                        android:hint="Title (optional)"
+                        android:textColorHint="@color/text_muted"
+                        android:textColor="@color/text_primary"
+                        android:paddingHorizontal="16dp"
+                        android:textSize="15sp"
+                        android:singleLine="true" />
+
+                    <ImageButton
+                        android:id="@+id/attachButton"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@drawable/attach_icon"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Attach file"
+                        android:padding="10dp"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <EditText
+                    android:id="@+id/contentInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:minHeight="220dp"
+                    android:background="@drawable/input_selector"
+                    android:hint="Etch something here..."
+                    android:textColorHint="@color/text_muted"
+                    android:textColor="@color/text_primary"
+                    android:padding="16dp"
+                    android:textSize="14sp"
+                    android:fontFamily="monospace"
+                    android:gravity="top"
+                    android:inputType="textMultiLine"
+                    android:scrollHorizontally="false"
+                    android:lineSpacingMultiplier="1.3"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- Private toggle -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/privateSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:id="@+id/privateSwitchLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Private"
+                        android:textColor="@color/text_muted"
+                        android:textSize="13sp"
+                        android:layout_marginStart="6dp" />
+                </LinearLayout>
+
+                <!-- Gradient paste button -->
+                <Button
+                    android:id="@+id/pasteButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:background="@drawable/gradient_button"
+                    android:text="Etch"
+                    android:textColor="@color/brand_ink"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:letterSpacing="0.04"
+                    android:stateListAnimator="@null"
+                    android:enabled="false"
+                    android:layout_marginBottom="8dp" />
+            </LinearLayout>
+
+            <!-- Loading overlay — outside createSection so it can show independently -->
+            <LinearLayout
+                android:id="@+id/pasteLoading"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:gravity="center"
+                android:visibility="gone"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/gradient_button"
+                android:layout_marginBottom="8dp">
+
+                <ProgressBar
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:indeterminateTint="#ffffff"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:id="@+id/pasteLoadingText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Etching...  tap to cancel"
+                    android:textColor="@color/brand_ink"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- ── Divider ───────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/fetchDivider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginVertical="20dp">
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="@color/border" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="  or fetch  "
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp"
+                    android:fontFamily="serif"
+                    android:textStyle="italic" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"
+                    android:background="@color/border" />
+            </LinearLayout>
+
+            <!-- ── Retrieve Section ──────────────────── -->
+            <LinearLayout
+                android:id="@+id/fetchSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="20dp">
+
+                <EditText
+                    android:id="@+id/addressInput"
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/input_selector"
+                    android:hint="Address..."
+                    android:textColorHint="@color/text_muted"
+                    android:textColor="@color/text_primary"
+                    android:paddingHorizontal="14dp"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"
+                    android:singleLine="true"
+                    android:layout_marginEnd="10dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/retrieveButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="50dp"
+                    android:text="Fetch"
+                    android:textSize="14sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:enabled="false" />
+            </LinearLayout>
+
+            <!-- ── Result Card (hidden until paste/retrieve) ── -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/resultCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/bg_surface"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="@color/border"
+                app:strokeWidth="1dp"
+                app:cardElevation="0dp"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="18dp">
+
+                    <!-- Title row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="10dp">
+
+                        <TextView
+                            android:id="@+id/resultTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <ImageButton
+                            android:id="@+id/shareButton"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Share"
+                            android:src="@android:drawable/ic_menu_share"
+                            android:padding="4dp" />
+                    </LinearLayout>
+
+                    <!-- Address chip -->
+                    <TextView
+                        android:id="@+id/resultAddress"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/address_chip_bg"
+                        android:padding="10dp"
+                        android:textColor="@color/accent_blue"
+                        android:textSize="11sp"
+                        android:fontFamily="monospace"
+                        android:layout_marginBottom="14dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <!-- Image preview (hidden by default) -->
+                    <ImageView
+                        android:id="@+id/resultImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:maxHeight="400dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="gone"
+                        android:layout_marginBottom="14dp" />
+
+                    <!-- Content preview -->
+                    <TextView
+                        android:id="@+id/resultContent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp"
+                        android:fontFamily="monospace"
+                        android:lineSpacingMultiplier="1.4"
+                        android:background="@drawable/code_bg"
+                        android:padding="14dp"
+                        android:maxLines="20"
+                        android:ellipsize="end" />
+
+                    <!-- Action buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="14dp"
+                        android:gravity="end">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/copyAddressBtn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:text="Copy Address"
+                            android:textSize="12sp"
+                            app:icon="@android:drawable/ic_menu_agenda"
+                            app:iconSize="14dp"
+                            style="@style/Widget.Material3.Button.TextButton"
+                            android:layout_marginEnd="4dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/copyContentBtn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:text="Copy Content"
+                            android:textSize="12sp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </ScrollView>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Host for Reown AppKit's bottom-sheet modal. Renders an empty Box
+         by default (pass-through for touches); when walletSession.connect()
+         fires AppKit's nav-graph route, this ComposeView takes over. -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/walletModalHost"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

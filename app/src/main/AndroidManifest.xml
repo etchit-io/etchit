@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Wakes the screen for time-sensitive wallet-approval notifications.
+         Auto-granted on Android < 14; user-grantable on 14+. Falls back
+         to ordinary heads-up if denied. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+    <!-- Android 11+ (API 30) requires explicit <queries> to see installed
+         packages. AppKit needs to detect which wallets are installed and
+         launch them via their wc: / vendor-scheme deep links. Without this,
+         the AppsFilter silently denies the interaction and wallets may
+         drop incoming session proposals.
+         See: https://developer.android.com/training/package-visibility -->
+    <queries>
+        <!-- Any app that handles raw WalletConnect pairing URIs -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="wc" />
+        </intent>
+        <!-- Browsers (for fallback WalletConnect flows) -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <!-- Known wallet vendor schemes. AppKit constructs vendor-specific
+             deep links (e.g. metamask://wc?uri=...); the picker can only
+             recognise an installed wallet if the package is visible. -->
+        <package android:name="io.metamask" />
+        <package android:name="me.rainbow" />
+        <package android:name="com.trustwallet.app" />
+        <package android:name="org.toshi" />
+        <package android:name="com.wallet.crypto.trustapp" />
+    </queries>
+
+    <application
+        android:name=".EtchitApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/full_backup_content"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Etchit"
+        tools:replace="android:dataExtractionRules,android:fullBackupContent">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Handle shared text from other apps -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <!-- WalletConnect deep-link return from external wallets.
+                 Scheme must match EtchitApplication's AppMetaData.redirect.
+                 singleTask launchMode keeps the session-request intent
+                 going to the existing Activity instance. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="etchit-wc" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".KeepAliveService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false"
+            android:stopWithTask="false" />
+    </application>
+</manifest>
