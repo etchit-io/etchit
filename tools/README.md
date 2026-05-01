@@ -1,39 +1,56 @@
 # tools
 
-Standalone decoders for etchit private-etch backup files. The primary
-recovery path is the app itself (paste the backup's etch address — the
-app detects the magic header and prompts for your password). These are
-for decoding a backup on a machine where etchit isn't installed.
+Standalone, no-install helpers that read etchit data on machines where
+the mobile app isn't running. All crypto is client-side; no servers, no
+accounts, no API keys.
 
-Both match the format in `app/.../BackupCrypto.kt` and always decrypt
-the same file the app does.
+## library.html / library.py — cross-device library viewer
 
-## decode.html — browser decoder
-
-Open `decode.html` in any modern browser. Pick the backup file, type
-the password, click Decode. All crypto runs client-side via WebCrypto;
-nothing leaves the page. Works offline from `file://`.
-
-## decode.py — CLI decoder
+Lists your on-chain library on any desktop. Inputs: wallet address +
+the 32-byte library key from the mobile app (Settings → Library →
+Back up library key). Output: the same entries the mobile app shows,
+each with the matching `ant-cli` command pre-built so you can fetch
+content from a terminal.
 
 ```bash
-pip install cryptography        # or: apt install python3-cryptography
-python3 decode.py <backup-file>
+# Browser version
+open tools/library.html       # or double-click; works from file://
+
+# CLI version
+pip install cryptography      # or: apt install python3-cryptography
+python3 tools/library.py 0xYOURWALLET... <library-key-hex>
 ```
 
-Writes `backup.json` (a JSON array of `{dm, t, ts}` entries) on success.
+Both are reference implementations of `docs/library-format-v1.md` —
+fully cross-checked against the Kotlin code in `app/`. Anyone with the
+spec can write a third equivalent client.
 
-## Recovering the actual etch content
+The browser version queries [BlockScout](https://arbitrum.blockscout.com)
+to enumerate your library txs and decrypts each one with the supplied
+key. Nothing leaves the page except that one HTTP request to BlockScout.
 
-The decoded JSON gives you the datamap hex (`dm` field) for each
-private etch. To fetch the content off the Autonomi network:
+## decode.html / decode.py — private-etch backup decoder
+
+For decoding offline backup files made via the app's "Backup to network"
+flow (separate from the library — see `app/.../BackupCrypto.kt`).
+
+```bash
+# Browser version
+open tools/decode.html
+
+# CLI version
+python3 tools/decode.py <backup-file>
+```
+
+Writes `backup.json` (a JSON array of `{dm, t, ts}` entries). To recover
+the actual private-etch content:
 
 ```bash
 echo -n '<hex from dm field>' | xxd -r -p > datamap.bin
 ant file download --output etch-content datamap.bin
 ```
 
-## Format
+## Backup format (decode.{html,py})
 
 ```
 magic   17 bytes   "ETCHIT_BACKUP_v1\n"
@@ -42,3 +59,9 @@ iv      12 bytes
 ct+tag  rest       AES-256-GCM ciphertext, 16-byte tag appended
 key = PBKDF2-HMAC-SHA256(password, salt, 600_000, 32)
 ```
+
+## Library wire format (library.{html,py})
+
+See [`../docs/library-format-v1.md`](../docs/library-format-v1.md) —
+full normative spec including KDF, AEAD, padding buckets, payload JSON
+schema, and replay rules.
