@@ -21,8 +21,8 @@ android {
         applicationId = "io.etchit"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.1.0"
+        versionCode = 5
+        versionName = "0.1.1"
 
         buildConfigField("String", "REOWN_PROJECT_ID", "\"$reownProjectId\"")
         buildConfigField("long", "CHAIN_ID", "42161L")
