@@ -158,9 +158,12 @@ def main() -> int:
     for e in visible:
         marker = "★" if e["bookmark"] else " "
         title = e["title"] or "Untitled"
+        # Filename for `ant file download --output`: sanitised title, falling back
+        # to an address prefix. Keeps shell-safe chars only.
+        safe = re.sub(r"[^a-zA-Z0-9._-]", "_", title)[:50] or e["addr"][:10]
         print(f"{marker} {title}")
         print(f"  {e['addr']}")
-        print(f"  ant-cli file download {e['addr']}")
+        print(f"  ant file download --output {safe} {e['addr']}")
         print()
     return 0
 

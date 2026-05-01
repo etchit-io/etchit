@@ -326,8 +326,14 @@ function render(entries) {
     actions.appendChild(copyAddr);
     const copyCmd = document.createElement("button");
     copyCmd.className = "outlined";
-    copyCmd.textContent = "Copy ant-cli command";
-    copyCmd.onclick = () => { navigator.clipboard.writeText(`ant-cli file download ${e.addr}`); status("Command copied", "ok"); };
+    copyCmd.textContent = "Copy ant command";
+    copyCmd.onclick = () => {
+      // Filename for `ant file download --output`: sanitised title, falling back
+      // to an address prefix. Keeps shell-safe chars only.
+      const safe = (e.title || "").replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 50) || e.addr.slice(0, 10);
+      navigator.clipboard.writeText(`ant file download --output ${safe} ${e.addr}`);
+      status("Command copied", "ok");
+    };
     actions.appendChild(copyCmd);
     row.appendChild(actions);
 

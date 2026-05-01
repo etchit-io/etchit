@@ -9,8 +9,8 @@ accounts, no API keys.
 Lists your on-chain library on any desktop. Inputs: wallet address +
 the 32-byte library key from the mobile app (Settings → Library →
 Back up library key). Output: the same entries the mobile app shows,
-each with the matching `ant-cli` command pre-built so you can fetch
-content from a terminal.
+each with the matching `ant` command pre-built so you can fetch
+content from a terminal (`ant file download --output <name> <addr>`).
 
 ```bash
 # Browser version
