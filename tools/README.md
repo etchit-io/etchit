@@ -22,6 +22,11 @@ python3 tools/library.py 0xYOURWALLET...           # prompts for key with no ech
 echo "<key-hex>" | python3 tools/library.py 0x… -  # or pipe via stdin (one line)
 ```
 
+The browser version has two paths:
+
+- **Connect wallet** (default, recommended). If you have a browser-extension wallet (MetaMask, Rabby, Coinbase, OKX, etc.), click *Connect wallet*, sign the same library-derive message the mobile app uses, and the page recreates the key in WebCrypto automatically — no copy-paste from your phone. Uses EIP-1193 (`window.ethereum`) directly; no WalletConnect SDK or CDN dependency.
+- **Manual key entry** (fallback). If you don't have a browser wallet (e.g., mobile-only wallet) or you're running the page from `file://` against a wallet that requires HTTPS, expand the *Or enter key manually* section and paste the 64-char key from the app's *Back up library key* dialog.
+
 Both are reference implementations of `docs/library-format-v1.md` —
 fully cross-checked against the Kotlin code in `app/`. Anyone with the
 spec can write a third equivalent client.
