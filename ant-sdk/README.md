@@ -37,9 +37,18 @@ on 2026-04-21). Our diffs live in `ffi/rust/ant-ffi/src/` and
   `Client::peer_count` added.
 - `Client::connect_local` removed (local-devnet only, unused).
 - `testnet-patches` Cargo feature removed entirely (production-only).
-- `start_node_with_warmup()` and `mobile_client_config()` helpers for
-  faster / cellular-friendly connect.
-- `ant-core` pinned as `git + rev = "c7d9ee1"`; `ant-node = "=0.10.0"`;
-  `evmlib = "=0.8.0"`.
+- `start_node_with_warmup()` helper for faster connect; `cli_style_client_config()`
+  matches `ant-cli` wire defaults (60s store timeout, IPv4-only, 5 MiB max
+  wire message). The earlier `mobile_client_config()` was dropped in favor
+  of this — the cli-style config gets the same connect-time wins without
+  diverging from `ant-cli` behavior.
+- `self_encryption` and `xor_name` promoted to direct deps so the
+  hierarchical-DataMap resolver in `data_get_public` / `data_get_private`
+  (calls `get_root_data_map_parallel` before `data_download`) compiles.
+- `ant-core` pinned as `git + rev = "8d43c3b"`; `ant-node = "=0.11.0"`;
+  `evmlib = "=0.8.0"`; `self_encryption = "=0.35.0"`; `xor_name = "=5.0.0"`.
+  This pin pulls in saorsa-core 0.24.0's MASQUE relay support — peers
+  behind NAT advertise relay addresses so clients dial those first,
+  cutting DIAL_TIMEOUT cascades on mobile / CGNAT.
 
 Full rebuild / upgrade instructions: [`../docs/FFI_BUILD.md`](../docs/FFI_BUILD.md).

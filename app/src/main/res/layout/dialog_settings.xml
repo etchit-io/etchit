@@ -139,6 +139,16 @@
                 android:layout_marginBottom="8dp" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/libraryBtn"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="\uD83D\uDCDA  Library"
+                android:textSize="13sp"
+                android:textAllCaps="false"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_marginBottom="8dp" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/viewTermsBtn"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"

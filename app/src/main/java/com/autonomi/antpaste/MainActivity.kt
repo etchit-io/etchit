@@ -42,6 +42,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.autonomi.antpaste.databinding.ActivityMainBinding
+import com.autonomi.antpaste.library.ArbiscanIndexer
+import com.autonomi.antpaste.library.LibraryController
+import com.autonomi.antpaste.library.LibraryEntry
+import com.autonomi.antpaste.library.LibraryKeyManager
+import com.autonomi.antpaste.library.WireEntry
 import com.autonomi.antpaste.net.ConnectionManager
 import com.autonomi.antpaste.net.ProgressTail
 import com.autonomi.antpaste.ui.WalletModalHost
@@ -137,6 +142,7 @@ class MainActivity : AppCompatActivity() {
     private var storeJob: Job? = null
     private lateinit var etchHistory: EtchHistory
     private lateinit var privateDataStore: PrivateDataStore
+    private lateinit var libraryController: LibraryController
     private lateinit var opHelper: OperationHelper
     private var networkInfoJob: Job? = null
     private var progressTailJob: Job? = null
@@ -315,6 +321,15 @@ class MainActivity : AppCompatActivity() {
 
         etchHistory = EtchHistory(prefs)
         privateDataStore = PrivateDataStore(encryptedPrefs)
+        val walletSignerForLibrary = (application as EtchitApplication).walletSigner
+        libraryController = LibraryController(
+            keyManager = LibraryKeyManager(encryptedPrefs, walletSignerForLibrary),
+            indexer = ArbiscanIndexer(
+                baseUrl = prefs.getString("library_indexer_url", null)?.takeIf { it.isNotBlank() } ?: ArbiscanIndexer.DEFAULT_BASE_URL,
+                apiKey = prefs.getString("library_indexer_api_key", null)?.takeIf { it.isNotBlank() },
+            ),
+            walletSigner = walletSignerForLibrary,
+        )
         opHelper = OperationHelper(this)
 
         // Restore any persisted pending etch. The resume Snackbar fires
@@ -1367,6 +1382,12 @@ class MainActivity : AppCompatActivity() {
             openPrivateEtches()
         }
 
+        view.findViewById<View>(R.id.libraryBtn).setOnClickListener {
+            hapticTick()
+            dialog.dismiss()
+            showLibraryScreen()
+        }
+
         view.findViewById<View>(R.id.viewTermsBtn).setOnClickListener {
             hapticTick()
             showTermsReadOnlyDialog()
@@ -1518,14 +1539,35 @@ class MainActivity : AppCompatActivity() {
         }
 
         row.setOnLongClickListener {
-            AlertDialog.Builder(this)
-                .setTitle("Remove from history?")
-                .setMessage(entry.title.ifEmpty { "Untitled" })
-                .setPositiveButton("Remove") { _, _ ->
-                    etchHistory.remove(entry)
-                    container.removeView(row)
-                    if (container.childCount == 0) dialog.dismiss()
+            val session = walletSession.state.value as? SessionState.Connected
+            val canAddToLibrary = !entry.isPrivate &&
+                session != null &&
+                libraryController.isSetUp(session.address)
+
+            val actions = mutableListOf<Pair<String, () -> Unit>>()
+            if (canAddToLibrary) {
+                actions += "Add to library" to {
+                    val s = session!!
+                    lifecycleScope.launch {
+                        try {
+                            // History rows are demonstrably the user's own etches → action = add.
+                            val txHash = libraryController.addByAddress(s.chainId, s.address, entry.address, entry.title, WireEntry.ACTION_ADD)
+                            showStatus("Added to library: ${txHash.take(10)}…")
+                        } catch (e: Exception) {
+                            showStatus("Add to library failed: ${e.message}", isError = true)
+                        }
+                    }
                 }
+            }
+            actions += "Remove from history" to {
+                etchHistory.remove(entry)
+                container.removeView(row)
+                if (container.childCount == 0) dialog.dismiss()
+            }
+
+            AlertDialog.Builder(this)
+                .setTitle(entry.title.ifEmpty { "Untitled" })
+                .setItems(actions.map { it.first }.toTypedArray()) { _, i -> actions[i].second() }
                 .setNegativeButton("Cancel", null)
                 .show()
             true
@@ -1689,6 +1731,607 @@ class MainActivity : AppCompatActivity() {
         }
         dialog.setContentView(scroll)
         dialog.show()
+    }
+
+    // ── Library (cross-device etch sync) ──────────────────────────
+
+    private fun showLibraryScreen() {
+        val dialog = BottomSheetDialog(this, R.style.SheetDialog)
+        val dp = resources.displayMetrics.density
+        val pad = (24 * dp).toInt()
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad, pad, pad)
+            setBackgroundColor(INK)
+        }
+
+        fun heading(text: String, sizeSp: Float = 20f, bottomMarginDp: Int = 4) = TextView(this).apply {
+            this.text = text
+            setTextColor(BONE)
+            textSize = sizeSp
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (bottomMarginDp * dp).toInt() }
+        }
+
+        fun muted(text: String, bottomMarginDp: Int = 16) = TextView(this).apply {
+            this.text = text
+            setTextColor(ASH)
+            textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (bottomMarginDp * dp).toInt() }
+        }
+
+        fun primaryButton(text: String, topMarginDp: Int = 8, onClick: () -> Unit) =
+            com.google.android.material.button.MaterialButton(this).apply {
+                this.text = text
+                textSize = 13f
+                isAllCaps = false
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = (topMarginDp * dp).toInt() }
+                setOnClickListener { onClick() }
+            }
+
+        fun outlinedButton(text: String, topMarginDp: Int = 8, onClick: () -> Unit) =
+            com.google.android.material.button.MaterialButton(
+                this,
+                null,
+                com.google.android.material.R.attr.materialButtonOutlinedStyle,
+            ).apply {
+                this.text = text
+                textSize = 13f
+                isAllCaps = false
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                ).apply { topMargin = (topMarginDp * dp).toInt() }
+                setOnClickListener { onClick() }
+            }
+
+        lateinit var render: () -> Unit
+        render = {
+            container.removeAllViews()
+            container.addView(heading("Library"))
+            container.addView(muted(
+                "An encrypted on-chain index of your public etches. Off until you set it up. " +
+                "Costs ~\$0.02–\$0.10 in ETH gas per sync. See README for the full privacy model."
+            ))
+
+            val session = walletSession.state.value
+            when {
+                session !is SessionState.Connected -> {
+                    container.addView(muted("Connect a wallet first to use the library.", bottomMarginDp = 0))
+                }
+                !libraryController.isSetUp(session.address) -> {
+                    container.addView(muted(
+                        "Setting up requires one signature to derive your library encryption key. " +
+                        "This signature does NOT authorize any transaction.", bottomMarginDp = 8))
+                    container.addView(primaryButton("Set up library") {
+                        lifecycleScope.launch {
+                            try {
+                                libraryController.setUp(session.chainId, session.address)
+                                showStatus("Library set up.")
+                                render()
+                            } catch (e: Exception) {
+                                showStatus("Setup failed: ${e.message}", isError = true)
+                            }
+                        }
+                    })
+                }
+                else -> {
+                    val wallet = session.address
+                    val chainId = session.chainId
+
+                    val visible = libraryController.entriesFor(wallet).values
+                        .filterNot { it.isHidden }
+                        .sortedByDescending { it.ts }
+
+                    if (visible.isEmpty()) {
+                        container.addView(muted(
+                            "No entries loaded. Tap Restore to fetch from chain, or Add by address to add one.",
+                            bottomMarginDp = 8))
+                    } else {
+                        container.addView(muted("${visible.size} entr${if (visible.size == 1) "y" else "ies"}", bottomMarginDp = 8))
+                        val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+                        val df = java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault())
+                        for (e in visible) {
+                            list.addView(libraryEntryRow(e, df, dialog) { render() })
+                        }
+                        container.addView(list)
+                    }
+
+                    container.addView(primaryButton("Restore from chain", topMarginDp = 16) {
+                        lifecycleScope.launch {
+                            try {
+                                showStatus("Fetching library…")
+                                libraryController.restoreFromChain(wallet)
+                                showStatus("Library updated.")
+                                render()
+                            } catch (e: Exception) {
+                                showStatus("Restore failed: ${e.message}", isError = true)
+                            }
+                        }
+                    })
+
+                    container.addView(outlinedButton("Add by address") {
+                        promptAddByAddress { addr, title, asMine ->
+                            lifecycleScope.launch {
+                                try {
+                                    val action = if (asMine) WireEntry.ACTION_ADD else WireEntry.ACTION_BOOKMARK
+                                    val txHash = libraryController.addByAddress(chainId, wallet, addr, title, action)
+                                    showStatus("Synced: ${txHash.take(10)}…")
+                                    render()
+                                } catch (e: Exception) {
+                                    showStatus("Add failed: ${e.message}", isError = true)
+                                }
+                            }
+                        }
+                    })
+
+                    container.addView(outlinedButton("Add multiple from history") {
+                        bulkAddFromHistoryDialog(chainId, wallet) { render() }
+                    })
+
+                    container.addView(outlinedButton("Bookmark multiple addresses") {
+                        bulkBookmarkDialog(chainId, wallet) { render() }
+                    })
+
+                    container.addView(outlinedButton("Back up library key") {
+                        backupLibraryKeyWithBiometric(wallet)
+                    })
+
+                    container.addView(outlinedButton("Restore library key from backup") {
+                        promptRestoreLibraryKey(wallet) { render() }
+                    })
+
+                    container.addView(outlinedButton("Forget library on this device") {
+                        AlertDialog.Builder(this)
+                            .setTitle("Forget library?")
+                            .setMessage(
+                                "Removes the library key from this device. Your on-chain entries remain " +
+                                "permanent and you can restore by setting up again with the same wallet, " +
+                                "or by pasting in a backup of the key."
+                            )
+                            .setPositiveButton("Forget") { _, _ ->
+                                libraryController.forget(wallet)
+                                showStatus("Library forgotten on this device.")
+                                render()
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                    })
+                }
+            }
+        }
+
+        render()
+
+        val scroll = androidx.core.widget.NestedScrollView(this).apply {
+            addView(container)
+        }
+        dialog.setContentView(scroll)
+        dialog.show()
+    }
+
+    private fun libraryEntryRow(
+        entry: LibraryEntry,
+        dateFormat: java.text.SimpleDateFormat,
+        dialog: BottomSheetDialog,
+        onChanged: () -> Unit,
+    ): View {
+        val dp = resources.displayMetrics.density
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val p = (8 * dp).toInt()
+            setPadding(p, p, p, p)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (4 * dp).toInt() }
+            isClickable = true
+            isFocusable = true
+        }
+        val titleLine = (if (entry.isBookmark) "★ " else "") + entry.title.ifEmpty { "Untitled" }
+        row.addView(TextView(this).apply {
+            text = titleLine
+            setTextColor(BONE)
+            textSize = 13f
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        })
+        row.addView(TextView(this).apply {
+            text = "${entry.addr.take(10)}…  ${if (entry.ts > 0) dateFormat.format(java.util.Date(entry.ts * 1000)) else ""}"
+            setTextColor(ASH)
+            textSize = 10f
+        })
+
+        row.setOnClickListener {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            cm.setPrimaryClip(ClipData.newPlainText("etch address", entry.addr))
+            showStatus("Address copied")
+        }
+
+        row.setOnLongClickListener {
+            val session = walletSession.state.value as? SessionState.Connected ?: return@setOnLongClickListener true
+            AlertDialog.Builder(this)
+                .setTitle("Hide from library?")
+                .setMessage(
+                    "Writes a permanent tombstone to your on-chain library. The etch itself stays " +
+                    "on the network. Costs one wallet transaction."
+                )
+                .setPositiveButton("Hide") { _, _ ->
+                    lifecycleScope.launch {
+                        try {
+                            libraryController.hide(session.chainId, session.address, entry.addr)
+                            (row.parent as? LinearLayout)?.removeView(row)
+                            showStatus("Hide queued.")
+                            onChanged()
+                        } catch (e: Exception) {
+                            showStatus("Hide failed: ${e.message}", isError = true)
+                        }
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+            true
+        }
+        return row
+    }
+
+    private fun backupLibraryKeyWithBiometric(walletAddress: String) {
+        val authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK or
+            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        val canAuth = BiometricManager.from(this).canAuthenticate(authenticators)
+        if (canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
+            showLibraryKeyBackup(walletAddress)
+            return
+        }
+        val executor = ContextCompat.getMainExecutor(this)
+        val prompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                showLibraryKeyBackup(walletAddress)
+            }
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                if (errorCode != BiometricPrompt.ERROR_USER_CANCELED &&
+                    errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                    showStatus("Authentication failed: $errString", isError = true)
+                }
+            }
+        })
+        prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Back up library key")
+            .setDescription("Authenticate to reveal the 32-byte key")
+            .setAllowedAuthenticators(authenticators)
+            .build())
+    }
+
+    private fun showLibraryKeyBackup(walletAddress: String) {
+        val key = libraryController.exportKey(walletAddress)
+        if (key == null) {
+            showStatus("No library key to back up", isError = true)
+            return
+        }
+        val hex = key.joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        val dp = resources.displayMetrics.density
+        val pad = (16 * dp).toInt()
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad, pad, pad)
+        }
+        layout.addView(TextView(this).apply {
+            text = "Save this in a password manager. Anyone with it can decrypt your library entries on chain. The key is bound to this wallet only."
+            setTextColor(ASH)
+            textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (12 * dp).toInt() }
+        })
+        layout.addView(TextView(this).apply {
+            text = hex
+            setTextColor(BONE)
+            textSize = 12f
+            typeface = android.graphics.Typeface.MONOSPACE
+            setTextIsSelectable(true)
+        })
+        AlertDialog.Builder(this)
+            .setTitle("Library key (hex)")
+            .setView(layout)
+            .setPositiveButton("Copy") { _, _ ->
+                val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText("library key", hex))
+                showStatus("Library key copied")
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun promptRestoreLibraryKey(walletAddress: String, onDone: () -> Unit) {
+        val dp = resources.displayMetrics.density
+        val pad = (16 * dp).toInt()
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad, pad, pad)
+        }
+        layout.addView(TextView(this).apply {
+            text = "Paste the 64-character hex key from a previous backup. Replaces the current device's key."
+            setTextColor(ASH)
+            textSize = 12f
+        })
+        val input = EditText(this).apply {
+            hint = "64-char hex"
+            setSingleLine(true)
+        }
+        layout.addView(input)
+        AlertDialog.Builder(this)
+            .setTitle("Restore library key")
+            .setView(layout)
+            .setPositiveButton("Restore") { _, _ ->
+                val raw = input.text.toString().trim().removePrefix("0x")
+                val bytes = try {
+                    require(raw.length == 64) { "expected 64 hex chars, got ${raw.length}" }
+                    ByteArray(32) { i ->
+                        ((Character.digit(raw[i * 2], 16) shl 4) + Character.digit(raw[i * 2 + 1], 16)).toByte()
+                    }
+                } catch (e: Exception) {
+                    showStatus("Invalid key: ${e.message}", isError = true)
+                    return@setPositiveButton
+                }
+                try {
+                    libraryController.importKey(walletAddress, bytes)
+                    showStatus("Library key restored. Tap Restore from chain.")
+                    onDone()
+                } catch (e: Exception) {
+                    showStatus("Restore failed: ${e.message}", isError = true)
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun bulkAddFromHistoryDialog(
+        chainId: String,
+        walletAddress: String,
+        onDone: () -> Unit,
+    ) {
+        val historyEntries = etchHistory.load().filter { !it.isPrivate && it.address.isNotBlank() }
+        if (historyEntries.isEmpty()) {
+            showStatus("No public etches in history.", isError = true)
+            return
+        }
+
+        val dialog = BottomSheetDialog(this, R.style.SheetDialog)
+        val dp = resources.displayMetrics.density
+        val pad = (24 * dp).toInt()
+
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad, pad, pad)
+            setBackgroundColor(INK)
+        }
+
+        root.addView(TextView(this).apply {
+            text = "Add multiple from history"
+            setTextColor(BONE)
+            textSize = 20f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (4 * dp).toInt() }
+        })
+        root.addView(TextView(this).apply {
+            text = "Tick the public etches to add. ~130 small entries fit in one batch tx; bigger lists split into multiple wallet prompts."
+            setTextColor(ASH)
+            textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (12 * dp).toInt() }
+        })
+
+        val countText = TextView(this).apply {
+            text = "0 selected"
+            setTextColor(ASH)
+            textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (8 * dp).toInt() }
+        }
+        root.addView(countText)
+
+        val checkboxes = mutableListOf<android.widget.CheckBox>()
+        for (entry in historyEntries) {
+            val cb = android.widget.CheckBox(this).apply {
+                text = "${entry.title.ifEmpty { "Untitled" }}\n${entry.address.take(10)}…"
+                setTextColor(BONE)
+                isChecked = false
+            }
+            checkboxes += cb
+            root.addView(cb)
+        }
+
+        val actionRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { topMargin = (16 * dp).toInt() }
+        }
+        val cancelBtn = com.google.android.material.button.MaterialButton(
+            this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle,
+        ).apply {
+            text = "Cancel"
+            isAllCaps = false
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = (8 * dp).toInt()
+            }
+            setOnClickListener { dialog.dismiss() }
+        }
+        val addBtn = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Add 0"
+            isAllCaps = false
+            isEnabled = false
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        actionRow.addView(cancelBtn)
+        actionRow.addView(addBtn)
+        root.addView(actionRow)
+
+        fun refreshCount() {
+            val n = checkboxes.count { it.isChecked }
+            countText.text = "$n selected"
+            addBtn.text = if (n == 0) "Add" else "Add $n"
+            addBtn.isEnabled = n > 0
+        }
+        for (cb in checkboxes) cb.setOnCheckedChangeListener { _, _ -> refreshCount() }
+
+        addBtn.setOnClickListener {
+            val selected = checkboxes.zip(historyEntries)
+                .filter { (cb, _) -> cb.isChecked }
+                .map { (_, entry) -> entry.address to entry.title }
+            if (selected.isEmpty()) return@setOnClickListener
+            dialog.dismiss()
+            lifecycleScope.launch {
+                try {
+                    showStatus("Sending ${selected.size} entries…")
+                    val txHashes = libraryController.addMultiple(chainId, walletAddress, selected, WireEntry.ACTION_ADD)
+                    val plural = if (txHashes.size > 1) "${txHashes.size} txs" else "1 tx"
+                    showStatus("Synced ${selected.size} entries in $plural")
+                    onDone()
+                } catch (e: Exception) {
+                    showStatus("Bulk add failed: ${e.message}", isError = true)
+                }
+            }
+        }
+
+        val scroll = androidx.core.widget.NestedScrollView(this).apply { addView(root) }
+        dialog.setContentView(scroll)
+        dialog.show()
+    }
+
+    // Parses a pasted, line-separated list. Each non-empty line must start with a
+    // 64-char hex address; everything after the first whitespace is the optional title.
+    // Returns (validEntries, lineNumbersThatFailed).
+    private fun parseAddressList(input: String): Pair<List<Pair<String, String>>, List<Int>> {
+        val out = mutableListOf<Pair<String, String>>()
+        val bad = mutableListOf<Int>()
+        input.split("\n").forEachIndexed { i, raw ->
+            val line = raw.trim()
+            if (line.isEmpty()) return@forEachIndexed
+            val parts = line.split(Regex("\\s+"), limit = 2)
+            val addr = parts[0].lowercase().removePrefix("0x")
+            val title = if (parts.size > 1) parts[1].trim() else ""
+            if (addr.length == 64 && addr.all { it in '0'..'9' || it in 'a'..'f' }) {
+                out += addr to title
+            } else {
+                bad += i + 1
+            }
+        }
+        return out to bad
+    }
+
+    private fun bulkBookmarkDialog(
+        chainId: String,
+        walletAddress: String,
+        onDone: () -> Unit,
+    ) {
+        val dp = resources.displayMetrics.density
+        val pad = (16 * dp).toInt()
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad, pad, pad)
+        }
+        layout.addView(TextView(this).apply {
+            text = "Paste 64-char etch addresses, one per line. Optional: add a space and a title after each address. All entries are saved as bookmarks (★)."
+            setTextColor(ASH)
+            textSize = 12f
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+            ).apply { bottomMargin = (8 * dp).toInt() }
+        })
+        val input = EditText(this).apply {
+            hint = "abcdef…  optional title\n0x1234…  another title\n…"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            setSingleLine(false)
+            minLines = 6
+            gravity = android.view.Gravity.TOP or android.view.Gravity.START
+        }
+        layout.addView(input)
+
+        AlertDialog.Builder(this)
+            .setTitle("Bookmark multiple addresses")
+            .setView(layout)
+            .setPositiveButton("Bookmark") { _, _ ->
+                val (entries, badLines) = parseAddressList(input.text.toString())
+                if (entries.isEmpty()) {
+                    showStatus("No valid addresses found", isError = true)
+                    return@setPositiveButton
+                }
+                lifecycleScope.launch {
+                    try {
+                        showStatus("Bookmarking ${entries.size}…")
+                        val txHashes = libraryController.addMultiple(
+                            chainId, walletAddress, entries, WireEntry.ACTION_BOOKMARK,
+                        )
+                        val plural = if (txHashes.size > 1) "${txHashes.size} txs" else "1 tx"
+                        val skip = if (badLines.isNotEmpty()) " (skipped ${badLines.size} invalid line${if (badLines.size > 1) "s" else ""})" else ""
+                        showStatus("Bookmarked ${entries.size} in $plural$skip")
+                        onDone()
+                    } catch (e: Exception) {
+                        showStatus("Bulk bookmark failed: ${e.message}", isError = true)
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun promptAddByAddress(onSubmit: (String, String, Boolean) -> Unit) {
+        val dp = resources.displayMetrics.density
+        val pad = (16 * dp).toInt()
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(pad, pad, pad, pad)
+        }
+        val addrInput = EditText(this).apply {
+            hint = "64-character hex address"
+            setSingleLine(true)
+        }
+        val titleInput = EditText(this).apply {
+            hint = "Title (optional)"
+            setSingleLine(true)
+        }
+        val asMineCheckbox = android.widget.CheckBox(this).apply {
+            text = "I created this etch (uncheck to bookmark someone else's)"
+            setTextColor(BONE)
+            isChecked = false
+        }
+        layout.addView(addrInput)
+        layout.addView(titleInput)
+        layout.addView(asMineCheckbox)
+        AlertDialog.Builder(this)
+            .setTitle("Add to library")
+            .setView(layout)
+            .setPositiveButton("Add") { _, _ ->
+                onSubmit(
+                    addrInput.text.toString().trim(),
+                    titleInput.text.toString().trim(),
+                    asMineCheckbox.isChecked,
+                )
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     // ── Backup / Restore ──────────────────────────────────────────

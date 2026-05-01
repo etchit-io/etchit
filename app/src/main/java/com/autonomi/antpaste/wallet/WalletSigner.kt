@@ -36,6 +36,21 @@ class WalletSigner {
             ?: throw RuntimeException("eth_sendTransaction returned non-string result: $result")
     }
 
+    // EIP-191 personal_sign. Caller passes raw UTF-8 message; the wallet applies
+    // the "\x19Ethereum Signed Message:\n<len>" prefix per spec. Returns the
+    // 65-byte (r||s||v) signature as a 0x-prefixed hex string.
+    suspend fun personalSign(chainId: String, from: String, message: String): String {
+        val msgHex = "0x" + Erc20.bytesToHex(message.toByteArray(Charsets.UTF_8))
+        val paramsJson = """["$msgHex","$from"]"""
+        val result = dispatch(
+            method = "personal_sign",
+            params = paramsJson,
+            chainId = chainId,
+        )
+        return result as? String
+            ?: throw RuntimeException("personal_sign returned non-string result: $result")
+    }
+
     suspend fun switchChain(sessionChainId: String, targetChainId: Long) {
         val hex = "0x" + targetChainId.toString(16)
         val paramsJson = """[{"chainId":"$hex"}]"""
