@@ -21,5 +21,7 @@ docs/relay-upgrade-plan.md
 Autonomi Files/
 original wallet imp/
 .kotlin/
+__pycache__/
+*.pyc
 # Reference clones of upstream Autonomi sources (read-only; refresh as needed)
 /withAutonomi/

@@ -14,11 +14,12 @@ content from a terminal.
 
 ```bash
 # Browser version
-open tools/library.html       # or double-click; works from file://
+open tools/library.html                            # or double-click; works from file://
 
 # CLI version
-pip install cryptography      # or: apt install python3-cryptography
-python3 tools/library.py 0xYOURWALLET... <library-key-hex>
+pip install cryptography                           # or: apt install python3-cryptography
+python3 tools/library.py 0xYOURWALLET...           # prompts for key with no echo
+echo "<key-hex>" | python3 tools/library.py 0x… -  # or pipe via stdin (one line)
 ```
 
 Both are reference implementations of `docs/library-format-v1.md` —
@@ -28,6 +29,23 @@ spec can write a third equivalent client.
 The browser version queries [BlockScout](https://arbitrum.blockscout.com)
 to enumerate your library txs and decrypts each one with the supplied
 key. Nothing leaves the page except that one HTTP request to BlockScout.
+
+### Library-key handling
+
+The key is sensitive — anyone with it (plus your wallet address) can
+decrypt your library entries on chain. Both tools are designed to keep
+it out of the obvious leak channels:
+
+- **CLI**: read via `getpass()` (no terminal echo, no shell history) or
+  piped from stdin. Never accepted on argv, so it stays out of `ps`,
+  `~/.bash_history`, and `~/.zsh_history`.
+- **Browser**: input is `<input type="password">` (masked by default,
+  `autocomplete="new-password"` to discourage browser save). A "Show"
+  toggle is available for paste verification. Key lives in JS memory
+  only for the page's lifetime — closing the tab clears it.
+
+Neither tool sends the key over the network; only the wallet address
+goes to the indexer.
 
 ## decode.html / decode.py — private-etch backup decoder
 

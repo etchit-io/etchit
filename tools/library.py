@@ -3,20 +3,22 @@
 List your etchit library on any machine.
 
     pip install cryptography     # or: apt install python3-cryptography
-    python3 library.py <wallet-address> <library-key-hex>
+    python3 library.py <wallet-address>          # prompts for key (no echo)
+    python3 library.py <wallet-address> -        # read key from stdin (one line)
 
 Reads BlockScout for the wallet's Arbitrum tx history, decrypts each
 library batch with the supplied AES-256-GCM key, replays add/bookmark/
 hide actions, and prints the visible entries with the matching
 ant-cli download command per entry.
 
-Get the library key from the mobile app: Settings → Library → Back up
-library key.
+The key is never read from argv (would land in shell history + `ps`).
+Get it from the mobile app: Settings → Library → Back up library key.
 
 Spec: ../docs/library-format-v1.md (sections 3.1, 4-11). Cross-impl
 test vector: this file is independent from the Kotlin implementation
 and round-trips through the same wire format.
 """
+import getpass
 import hashlib
 import json
 import re
@@ -130,14 +132,20 @@ def replay(wallet: str, key: bytes) -> list[dict]:
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
-        print(f"usage: {sys.argv[0]} <wallet-address> <library-key-hex>", file=sys.stderr)
+    if len(sys.argv) not in (2, 3):
+        print(f"usage: {sys.argv[0]} <wallet-address> [-]", file=sys.stderr)
+        print("       (key is prompted with no echo; use '-' to read it from stdin)", file=sys.stderr)
         return 2
     wallet = sys.argv[1].strip()
-    key_hex = sys.argv[2].strip().removeprefix("0x")
     if not re.fullmatch(r"0x[0-9a-fA-F]{40}", wallet):
         print(f"invalid wallet address: {wallet}", file=sys.stderr)
         return 1
+
+    if len(sys.argv) == 3 and sys.argv[2] == "-":
+        key_hex = sys.stdin.readline().strip().removeprefix("0x")
+    else:
+        key_hex = getpass.getpass("library key (hex, no echo): ").strip().removeprefix("0x")
+
     if not re.fullmatch(r"[0-9a-fA-F]{64}", key_hex):
         print(f"invalid library key (need 64 hex chars, got {len(key_hex)})", file=sys.stderr)
         return 1

@@ -82,7 +82,10 @@
   <input id="wallet" type="text" placeholder="0x… (40 hex chars)" autocomplete="off" spellcheck="false">
 
   <label for="key">Library key (from app: Settings → Library → Back up library key)</label>
-  <input id="key" type="text" placeholder="64 hex chars" autocomplete="off" spellcheck="false">
+  <div style="display:flex; gap:8px;">
+    <input id="key" type="password" placeholder="64 hex chars" autocomplete="new-password" spellcheck="false" style="flex:1;">
+    <button id="toggleKey" type="button" class="outlined" style="padding:0 10px;">Show</button>
+  </div>
 
   <details>
     <summary>Advanced</summary>
@@ -276,6 +279,13 @@ function render(entries) {
     root.appendChild(row);
   }
 }
+
+$("toggleKey").addEventListener("click", () => {
+  const inp = $("key");
+  const btn = $("toggleKey");
+  if (inp.type === "password") { inp.type = "text"; btn.textContent = "Hide"; }
+  else { inp.type = "password"; btn.textContent = "Show"; }
+});
 
 $("decode").addEventListener("click", async () => {
   status("");
