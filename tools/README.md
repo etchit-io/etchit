@@ -22,6 +22,8 @@ python3 tools/library.py 0xYOURWALLET...           # prompts for key with no ech
 echo "<key-hex>" | python3 tools/library.py 0x… -  # or pipe via stdin (one line)
 ```
 
+The hosted copy of the browser version lives at **<https://etchit.io/library>** (deployed from a sibling website repo; keep both copies of `library.html` in sync when editing).
+
 The browser version has two paths:
 
 - **Connect wallet** (default, recommended). If you have a browser-extension wallet (MetaMask, Rabby, Coinbase, OKX, etc.), click *Connect wallet*, sign the same library-derive message the mobile app uses, and the page recreates the key in WebCrypto automatically — no copy-paste from your phone. Uses EIP-1193 (`window.ethereum`) directly; no WalletConnect SDK or CDN dependency.
